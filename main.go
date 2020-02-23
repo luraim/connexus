@@ -1,22 +1,25 @@
 package main
 
 import (
-	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
+	"regexp"
 
 	"github.com/palantir/stacktrace"
 
 	"gopkg.in/russross/blackfriday.v2"
 )
 
-const homeMdFile = "test1.md"
+const homeTopic = "test1"
 const css = "style.css"
+const templateFolder = "templates"
+
+var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9_-]+)$")
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -34,47 +37,30 @@ func main() {
 
 type Server struct {
 	rootFolder string
+	templates  *template.Template
 }
 
 func newServer(rootFolder string) *Server {
-	return &Server{rootFolder: rootFolder}
+	templateFiles := make([]string, 0)
+	for _, tf := range []string{"edit.html", "view.html"} {
+		templateFiles = append(templateFiles, filepath.Join(templateFolder, tf))
+	}
+	templates := template.Must(template.ParseFiles(templateFiles...))
+	return &Server{
+		rootFolder: rootFolder,
+		templates:  templates,
+	}
 }
 
-func (sr *Server) handler(w http.ResponseWriter, r *http.Request) {
-	if len(r.URL.Path) == 1 {
-		log.Println("rendering home page:", homeMdFile)
-		fmt.Fprintf(w, sr.md2html(homeMdFile))
-	} else {
-		fileName := r.URL.Path[1:]
-		fmt.Println("file:", fileName)
-		if strings.HasSuffix(fileName, ".md") {
-			log.Println("rendering md file:", fileName)
-			fmt.Fprintf(w, sr.md2html(fileName))
-		} else {
-			contents, err := ioutil.ReadFile(fileName)
-			if err != nil {
-				log.Println(stacktrace.Propagate(err, "error reading %s", fileName))
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			fmt.Fprintf(w, string(contents))
-		}
-	}
-	//fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-}
-
-func (sr *Server) md2html(mdFile string) string {
-	input, err := ioutil.ReadFile(filepath.Join(sr.rootFolder, mdFile))
-	if err != nil {
-		log.Fatalln(stacktrace.Propagate(err, "error reading md file"))
-	}
-
-	output := blackfriday.Run(input)
-	return PRE + string(output) + POST
+func (sr *Server) homePage(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/view/"+homeTopic, http.StatusFound)
 }
 
 func (sr *Server) run() {
-	http.HandleFunc("/", sr.handler)
+	http.HandleFunc("/", sr.homePage)
+	http.HandleFunc("/view/", makeHandler(sr.viewHandler))
+	http.HandleFunc("/edit/", makeHandler(sr.editHandler))
+	http.HandleFunc("/save/", makeHandler(sr.saveHandler))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
@@ -92,3 +78,88 @@ const POST = `
 </body>
 </html>
 `
+
+func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
+	m := validPath.FindStringSubmatch(r.URL.Path)
+	if m == nil {
+		http.NotFound(w, r)
+		return "", stacktrace.NewError(
+			"Invalid Page Title:%s", r.URL.Path)
+	}
+	return m[2], nil // The title is the second subexpression.
+}
+
+type Page struct {
+	Title string
+	Body  []byte
+}
+
+func (pg *Page) Render() template.HTML {
+	output := blackfriday.Run(pg.Body)
+	return template.HTML(PRE + string(output) + POST)
+}
+
+func (sr *Server) pagePath(title string) string {
+	return filepath.Join(sr.rootFolder, title+".md")
+}
+
+func (sr *Server) savePage(p *Page) error {
+	filename := sr.pagePath(p.Title)
+	return ioutil.WriteFile(filename, p.Body, 0600)
+}
+
+func (sr *Server) loadMarkdown(title string) (*Page, error) {
+	filename := sr.pagePath(title)
+	body, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, stacktrace.Propagate(err,
+			"error reading file: '%s'", filename)
+	}
+	return &Page{Title: title, Body: body}, nil
+}
+
+func (sr *Server) viewHandler(w http.ResponseWriter, r *http.Request, title string) {
+	p, err := sr.loadMarkdown(title)
+	if err != nil {
+		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+		return
+	}
+	sr.renderTemplate(w, "view", p)
+}
+
+func (sr *Server) editHandler(w http.ResponseWriter, r *http.Request, title string) {
+	p, err := sr.loadMarkdown(title)
+	if err != nil {
+		p = &Page{Title: title}
+	}
+	sr.renderTemplate(w, "edit", p)
+}
+
+func (sr *Server) saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+	body := r.FormValue("body")
+	p := &Page{Title: title, Body: []byte(body)}
+	err := sr.savePage(p)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/view/"+title, http.StatusFound)
+}
+
+func (sr *Server) renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
+	err := sr.templates.ExecuteTemplate(w, tmpl+".html", p)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		m := validPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
+			http.NotFound(w, r)
+			return
+		}
+		fn(w, r, m[2])
+	}
+}
