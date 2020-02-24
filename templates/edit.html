@@ -21,13 +21,13 @@
 <body>
 
 <div class="text-center">
-    <h1>Editing {{.Title}}</h1>
+    <h1>Editing {{.MdFileName}}</h1>
 </div>
 
 <div class="container">
     <div class="row">
         <div class="col">
-            <form action="/save/{{.Title}}" method="POST">
+            <form action="/save/{{.MdFileName}}" method="POST">
                 <div class="text-center">
                     <textarea name="body" rows="30" cols="100">
                         {{printf "%s" .Body}}
