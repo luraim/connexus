@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -10,37 +11,64 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/palantir/stacktrace"
+	mathjax "github.com/litao91/goldmark-mathjax"
 
-	"gopkg.in/russross/blackfriday.v2"
+	highlighting "github.com/yuin/goldmark-highlighting"
+
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
+
+	"github.com/palantir/stacktrace"
 )
 
-const homeTopic = "test1"
-const css = "style.css"
 const templateFolder = "templates"
 
 var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9_-]+)$")
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	if len(os.Args) != 2 {
-		log.Fatalln("please provide root folder")
+	if len(os.Args) != 3 {
+		log.Fatalln("please provide root folder and main topic")
 	}
-	rootFolder := os.Args[1]
-	err := exec.Command("cp", css, rootFolder).Run()
+	rootFolder, err := filepath.Abs(os.Args[1])
 	if err != nil {
-		log.Println(stacktrace.Propagate(err, "failed to copy %s to %s", css, rootFolder))
+		log.Fatalln("error getting absolute path to root folder")
 	}
-	server := newServer(rootFolder)
+
+	homeTopic := os.Args[2]
+
+	imgFolder := filepath.Join(rootFolder, "img")
+	exec.Command("mkdir", imgFolder).Run()
+
+	server := newServer(rootFolder, homeTopic)
+	log.Printf("Starting server with root: '%s' and home: '%s'\n",
+		server.rootFolder, server.homeTopic)
 	server.run()
 }
 
 type Server struct {
 	rootFolder string
+	homeTopic  string
 	templates  *template.Template
+	md         *goldmark.Markdown
 }
 
-func newServer(rootFolder string) *Server {
+func newServer(rootFolder, homeTopic string) *Server {
+	md := goldmark.New(
+		goldmark.WithExtensions(extension.Table, extension.TaskList,
+			extension.Linkify, extension.DefinitionList, extension.Footnote,
+			extension.Strikethrough, extension.Typographer,
+			highlighting.Highlighting, mathjax.MathJax),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+		goldmark.WithRendererOptions(
+			html.WithHardWraps(),
+			html.WithXHTML(),
+		),
+	)
 	templateFiles := make([]string, 0)
 	for _, tf := range []string{"edit.html", "view.html"} {
 		templateFiles = append(templateFiles, filepath.Join(templateFolder, tf))
@@ -48,12 +76,14 @@ func newServer(rootFolder string) *Server {
 	templates := template.Must(template.ParseFiles(templateFiles...))
 	return &Server{
 		rootFolder: rootFolder,
+		homeTopic:  homeTopic,
 		templates:  templates,
+		md:         &md,
 	}
 }
 
 func (sr *Server) homePage(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/view/"+homeTopic, http.StatusFound)
+	http.Redirect(w, r, "/view/"+sr.homeTopic, http.StatusFound)
 }
 
 func (sr *Server) run() {
@@ -61,42 +91,34 @@ func (sr *Server) run() {
 	http.HandleFunc("/view/", makeHandler(sr.viewHandler))
 	http.HandleFunc("/edit/", makeHandler(sr.editHandler))
 	http.HandleFunc("/save/", makeHandler(sr.saveHandler))
+	fs := http.FileServer(http.Dir(filepath.Join(sr.rootFolder, "img")))
+	http.Handle("/img/", http.StripPrefix("/img/", fs))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-const PRE = `
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<title></title>
-<meta charset="utf-8" />
-<link rel="stylesheet" type="text/css" href="style.css" />
-</head>
-<body> `
-
-const POST = `
-</body>
-</html>
-`
-
-func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
-	m := validPath.FindStringSubmatch(r.URL.Path)
-	if m == nil {
-		http.NotFound(w, r)
-		return "", stacktrace.NewError(
-			"Invalid Page Title:%s", r.URL.Path)
-	}
-	return m[2], nil // The title is the second subexpression.
+type Page struct {
+	Title  string
+	Body   []byte
+	Server *Server
 }
 
-type Page struct {
-	Title string
-	Body  []byte
+func newPage(title string, sr *Server) *Page {
+	return &Page{
+		Title:  title,
+		Body:   make([]byte, 0),
+		Server: sr,
+	}
 }
 
 func (pg *Page) Render() template.HTML {
-	output := blackfriday.Run(pg.Body)
-	return template.HTML(PRE + string(output) + POST)
+	var buf bytes.Buffer
+	md := *pg.Server.md
+	if err := md.Convert(pg.Body, &buf); err != nil {
+		return template.HTML(stacktrace.Propagate(err,
+			"error converting md %s to html", pg.Title).Error())
+	}
+
+	return template.HTML(buf.String())
 }
 
 func (sr *Server) pagePath(title string) string {
@@ -115,7 +137,9 @@ func (sr *Server) loadMarkdown(title string) (*Page, error) {
 		return nil, stacktrace.Propagate(err,
 			"error reading file: '%s'", filename)
 	}
-	return &Page{Title: title, Body: body}, nil
+	page := newPage(title, sr)
+	page.Body = body
+	return page, nil
 }
 
 func (sr *Server) viewHandler(w http.ResponseWriter, r *http.Request, title string) {
@@ -130,14 +154,15 @@ func (sr *Server) viewHandler(w http.ResponseWriter, r *http.Request, title stri
 func (sr *Server) editHandler(w http.ResponseWriter, r *http.Request, title string) {
 	p, err := sr.loadMarkdown(title)
 	if err != nil {
-		p = &Page{Title: title}
+		p = newPage(title, sr)
 	}
 	sr.renderTemplate(w, "edit", p)
 }
 
 func (sr *Server) saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
-	p := &Page{Title: title, Body: []byte(body)}
+	p := newPage(title, sr)
+	p.Body = []byte(body)
 	err := sr.savePage(p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
