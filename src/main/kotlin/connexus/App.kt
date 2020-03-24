@@ -9,8 +9,22 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import java.io.File
+
+data class Wiki(val rootFolder: File, val homeTopic: String)
 
 fun main(args: Array<String>) {
+
+    if (args.count() != 2) {
+        println("please provide root folder and home page title")
+        return
+    }
+    
+    val rootFolder = File(args[0].replaceFirst("^~".toRegex(),
+            System.getProperty("user.home")))
+
+    val wiki = Wiki(rootFolder = rootFolder, homeTopic = args[1])
+
     val server = embeddedServer(Netty, port = 8080) {
         routing {
             get("/") {
