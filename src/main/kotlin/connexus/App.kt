@@ -3,15 +3,26 @@
  */
 package connexus
 
-import io.ktor.application.*
-import io.ktor.http.*
-import io.ktor.response.*
-import io.ktor.routing.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
+import connexus.wiki.Wiki
+import io.ktor.application.call
+import io.ktor.html.respondHtml
+import io.ktor.http.ContentType
+import io.ktor.response.respondRedirect
+import io.ktor.response.respondText
+import io.ktor.routing.get
+import io.ktor.routing.routing
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
+import kotlinx.html.*
+import org.commonmark.Extension
+import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension
+import org.commonmark.ext.gfm.tables.TablesExtension
+import org.commonmark.node.Node
+import org.commonmark.parser.Parser
+import org.commonmark.renderer.html.HtmlRenderer
 import java.io.File
+import java.util.*
 
-data class Wiki(val rootFolder: File, val homeTopic: String)
 
 fun main(args: Array<String>) {
 
@@ -19,7 +30,7 @@ fun main(args: Array<String>) {
         println("please provide root folder and home page title")
         return
     }
-    
+
     val rootFolder = File(args[0].replaceFirst("^~".toRegex(),
             System.getProperty("user.home")))
 
@@ -28,12 +39,40 @@ fun main(args: Array<String>) {
     val server = embeddedServer(Netty, port = 8080) {
         routing {
             get("/") {
-                call.respondText("Hello World!", ContentType.Text.Plain)
+                call.respondRedirect("/view/${wiki.homeTopic}")
             }
-            get("/demo") {
-                call.respondText("HELLO WORLD!")
+            get("/view/{path...}") {
+                val path = call.parameters["path"] ?: return@get
+                call.respondHtml {
+                    head {
+                        title {
+                            +path
+                        }
+                        meta(charset = "utf-8")
+                        link(rel = "stylesheet",
+                                type = "text/css",
+                                href = "style.css")
+                    }
+                    body {
+                        val content = wiki.loadPage(path)
+                        unsafe {
+                            +content
+                        }
+                    }
+                }
             }
         }
     }
     server.start(wait = true)
+}
+
+fun main() {
+    val home = System.getProperty("user.home")
+    val wikiDir = File("$home/tmp/testwiki")
+    val input = wikiDir.resolve("full-feature-testing.md")
+    val contents = input.readText()
+
+    val wiki = Wiki(wikiDir, "test1.md")
+    wiki.renderToFile(contents, "test.html")
+
 }

@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 object Versions {
     const val ktor = "1.3.2"
+    const val commonMark = "0.14.0"
 }
 
 plugins {
@@ -38,8 +39,12 @@ dependencies {
     // Use the Kotlin JDK 8 standard library.
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("io.ktor:ktor-server-netty:${Versions.ktor}")
+    implementation("io.ktor:ktor-html-builder:${Versions.ktor}")
     implementation("io.github.microutils:kotlin-logging:1.7.9")
     implementation("ch.qos.logback:logback-classic:1.2.3")
+    implementation("com.atlassian.commonmark:commonmark:${Versions.commonMark}")
+    implementation("com.atlassian.commonmark:commonmark-ext-gfm-tables:${Versions.commonMark}")
+    implementation("com.atlassian.commonmark:commonmark-ext-gfm-strikethrough:${Versions.commonMark}")
 
     // Use the Kotlin test library.
     testImplementation("org.jetbrains.kotlin:kotlin-test")
