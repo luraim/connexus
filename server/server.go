@@ -28,7 +28,8 @@ type Server struct {
 	box          *packr.Box
 }
 
-const cssFileName = "style.css"
+var bootstrapFiles = []string{"bootstrap.min.css", "jquery.min.js",
+	"bootstrap.bundle.min.js"}
 
 func NewServer(rootFolder, homeTopic string) *Server {
 
@@ -40,26 +41,33 @@ func NewServer(rootFolder, homeTopic string) *Server {
 		subFolderPath := filepath.Join(rootFolder, f)
 		if _, err := os.Stat(subFolderPath); os.IsNotExist(err) {
 			log.Println("creating sub folder:", subFolderPath)
-			os.Mkdir(subFolderPath, 0755)
+			err := os.Mkdir(subFolderPath, 0755)
+			if err != nil {
+				log.Fatalln("failed to create", subFolderPath)
+			}
+		} else {
+			log.Printf("%s already present\n", subFolderPath)
 		}
 	}
 
-	// ensure that 'css' subfolder in wiki contains css file
-	cssFile := filepath.Join(rootFolder, "css", cssFileName)
-	if _, err := os.Stat(cssFile); os.IsNotExist(err) {
-		log.Printf("css file %s not present. writing...\n", cssFile)
-		// read css content from box
-		css, err := box.FindString(cssFileName)
-		if err != nil {
-			log.Fatalln("could not find css file in box")
+	// ensure that 'css' subfolder in wiki contains bootstrap files
+	for _, bf := range bootstrapFiles {
+		bootstrapFile := filepath.Join(rootFolder, "css", bf)
+		if _, err := os.Stat(bootstrapFile); os.IsNotExist(err) {
+			log.Printf("bootstrap file %s not present. writing...\n", bootstrapFile)
+			// read css content from box
+			css, err := box.FindString("css/" + bf)
+			if err != nil {
+				log.Fatalf("could not find bootstrap file %s in box\n", bf)
+			}
+			// write file in css sub folder under wiki root
+			err = ioutil.WriteFile(bootstrapFile, []byte(css), 0644)
+			if err != nil {
+				log.Fatalln("failed to write css file", bootstrapFile)
+			}
+		} else {
+			log.Printf("bootstrap file %s already present\n", bootstrapFile)
 		}
-		// write css file in css sub folder under wiki root
-		err = ioutil.WriteFile(cssFile, []byte(css), 0644)
-		if err != nil {
-			log.Fatalln("failed to write css file", cssFile)
-		}
-	} else {
-		log.Printf("css file %s present\n", cssFile)
 	}
 
 	// initialize markdown parser

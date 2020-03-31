@@ -1,5 +1,7 @@
 #!/bin/bash
+export BIN=connexusserver
+rm $BIN
 packr2 && \
-go build -o connexus main.go && \
+go build -o $BIN main.go && \
 packr2 clean && \
-./connexus ~/tmp/testwiki test1
+./$BIN ~/tmp/testwiki test1
