@@ -1,0 +1,5 @@
+#!/bin/bash
+packr2 && \
+go build -o connexus main.go && \
+packr2 clean && \
+./connexus ~/tmp/testwiki test1
