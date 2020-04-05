@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/gobuffalo/packr/v2"
 
@@ -103,7 +104,9 @@ func NewServer(rootFolder, homeTopic, port string) *Server {
 		if err != nil {
 			log.Fatalln("unable to find template", tf)
 		}
-		tmpl, err := template.New(tf).Parse(content)
+		tmpl, err := template.New(tf).Funcs(template.FuncMap{
+			"title": strings.Title,
+		}).Parse(content)
 		if err != nil {
 			log.Fatalln("failed to parse template", tf)
 		}
