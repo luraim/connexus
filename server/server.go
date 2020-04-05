@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/gobuffalo/packr/v2"
 
@@ -131,5 +132,21 @@ func (sr *Server) Run() {
 
 	fs := http.FileServer(http.Dir(sr.rootFolder))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", sr.port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("localhost:%s", sr.port),
+		nil))
+}
+
+var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9/_-]+)$")
+
+func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		m := validPath.FindStringSubmatch(r.URL.Path)
+		if m == nil {
+			log.Println("url path not found:", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+		//log.Println("md file name:", m[2])
+		fn(w, r, m[2])
+	}
 }

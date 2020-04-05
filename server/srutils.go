@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
 	"runtime"
 
 	"github.com/palantir/stacktrace"
@@ -39,4 +40,8 @@ func (sr *Server) renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 		httpErr(w, err)
 		return
 	}
+}
+
+func (sr *Server) pagePath(fileName string) (string, error) {
+	return filepath.Join(sr.rootFolder, fileName+".md"), nil
 }

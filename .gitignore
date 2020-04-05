@@ -10,4 +10,5 @@ target
 env
 venv
 *.txt
-connexusserver
+dist
+testwiki/css
