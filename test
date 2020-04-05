@@ -1,4 +1,4 @@
 #!/bin/bash
 export BIN=connexusserver
-./build
-dist/$BIN testwiki test1 46723
+./build &&\
+$BIN testwiki test1 46723

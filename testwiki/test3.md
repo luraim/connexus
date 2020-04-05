@@ -1,4 +1,4 @@
-                                                                                
+                                                                                                                                                
 ## Test list
 
  * abc
@@ -6,7 +6,7 @@
 
 [test1](test1)
           
-## table of all links
+## Table of all links
 
 | index        |   link                  |    
 | ---------  | -------------  |
@@ -14,11 +14,13 @@
 | 2                | [test2](test2) |
 | 3                | [demo](full-feature-testing) |
                     
-                    
+### Another table
               
 | foo | bar |
 | --- | --- |
 | baz | bim |
+                    
+                    
                     
                     
                     

@@ -1,4 +1,4 @@
-                                                                                                
+                                                                                                                                                                
 # An h1 header
 
 Paragraphs are separated by a blank line.
@@ -112,11 +112,13 @@ Tables can look like this:
 
 and images can be specified like so:
 
-![example image](img/example-image.jpg "An exemplary image")
+![example image](/static/img/example-image.jpg "An exemplary image")
 
 
 And note that you can backslash-escape any punctuation characters
 which you wish to be displayed literally, ex.: \`foo\`, \*bar\*, etc.
+                    
+                    
                     
                     
                     

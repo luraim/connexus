@@ -74,6 +74,20 @@ func NewServer(rootFolder, homeTopic, port string) *Server {
 			log.Printf("bootstrap file %s already present\n", bootstrapFile)
 		}
 	}
+	customCss := "style.css"
+	// ensure that the css folder contains the latest copy of the custom css file
+	cssFile := filepath.Join(rootFolder, "css", customCss)
+	// read css content from box
+	css, err := box.FindString("css/" + customCss)
+	if err != nil {
+		log.Fatalf("could not find custom css file %s in box\n", cssFile)
+	}
+	// write file in css sub folder under wiki root
+	err = ioutil.WriteFile(cssFile, []byte(css), 0644)
+	if err != nil {
+		log.Fatalln("failed to write css file", cssFile)
+	}
+	log.Println("wrote custom css file", cssFile)
 
 	// initialize markdown parser
 	md := goldmark.New(
@@ -109,14 +123,11 @@ func NewServer(rootFolder, homeTopic, port string) *Server {
 		box:          box,
 	}
 
-	err := sr.buildLinks()
+	err = sr.buildLinks()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println("forward links:")
-	fmt.Println(sr.forwardLinks)
-	fmt.Println("reverse links:")
-	fmt.Println(sr.reverseLinks)
+
 	return sr
 }
 

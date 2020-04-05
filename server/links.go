@@ -106,7 +106,8 @@ func (sr *Server) buildLinks() error {
 
 	sr.forwardLinks = forwardLinks
 	sr.reverseLinks = reverseLinks
-
+	log.Printf("links rebuilt: %d forward, %d reverse\n",
+		len(forwardLinks), len(reverseLinks))
 	return nil
 }
 
