@@ -120,6 +120,10 @@ func parseLinks(content string) []string {
 			continue
 		}
 		_, fileName := m[1], m[2]
+		if strings.HasPrefix(fileName, "/static") {
+			// link to static content - skip
+			continue
+		}
 		ret = append(ret, fileName)
 	}
 	return ret
