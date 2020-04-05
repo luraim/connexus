@@ -63,7 +63,7 @@ func (sr *Server) pagePath(fileName string) (string, error) {
 }
 
 func (sr *Server) savePage(p *Page) error {
-	filename, err := sr.pagePath(p.MdFileName)
+	filename, err := sr.pagePath(p.Topic)
 	if err != nil {
 		return stacktrace.Propagate(err, "failed to get page path")
 	}

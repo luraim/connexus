@@ -4,4 +4,4 @@ rm $BIN
 packr2 && \
 go build -o $BIN main.go && \
 packr2 clean && \
-./$BIN ~/tmp/testwiki test1
+./$BIN ~/tmp/testwiki test1 46723

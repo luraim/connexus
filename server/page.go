@@ -8,16 +8,16 @@ import (
 )
 
 type Page struct {
-	MdFileName string
-	Body       []byte
-	Server     *Server
+	Topic  string
+	Body   []byte
+	Server *Server
 }
 
-func newPage(mdFileName string, sr *Server) *Page {
+func newPage(topicName string, sr *Server) *Page {
 	return &Page{
-		MdFileName: mdFileName,
-		Body:       make([]byte, 0),
-		Server:     sr,
+		Topic:  topicName,
+		Body:   make([]byte, 0),
+		Server: sr,
 	}
 }
 
@@ -26,8 +26,16 @@ func (pg *Page) Render() template.HTML {
 	md := *pg.Server.md
 	if err := md.Convert(pg.Body, &buf); err != nil {
 		return template.HTML(stacktrace.Propagate(err,
-			"error converting md %s to html", pg.MdFileName).Error())
+			"error converting md %s to html", pg.Topic).Error())
 	}
 
 	return template.HTML(buf.String())
+}
+
+func (pg *Page) OutgoingLinks() []string {
+	return pg.Server.outgoingLinks(pg.Topic)
+}
+
+func (pg *Page) IncomingLinks() []string {
+	return pg.Server.incomingLinks(pg.Topic)
 }

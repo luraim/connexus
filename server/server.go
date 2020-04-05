@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -22,16 +23,19 @@ const templateFolder = "templates"
 type Server struct {
 	rootFolder   string
 	homeTopic    string
+	port         string
 	viewTemplate *template.Template
 	editTemplate *template.Template
 	md           *goldmark.Markdown
 	box          *packr.Box
+	forwardLinks LinkMap
+	reverseLinks LinkMap
 }
 
 var bootstrapFiles = []string{"bootstrap.min.css", "jquery.min.js",
 	"bootstrap.bundle.min.js"}
 
-func NewServer(rootFolder, homeTopic string) *Server {
+func NewServer(rootFolder, homeTopic, port string) *Server {
 
 	box := packr.New("connexus_box", "./templates")
 
@@ -79,14 +83,6 @@ func NewServer(rootFolder, homeTopic string) *Server {
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
 		goldmark.WithRendererOptions(html.WithHardWraps(), html.WithXHTML()))
 
-	//// preload templates
-	////templateFiles := make([]string, 0)
-	//for _, tf := range
-	//	//templateFiles = append(templateFiles, filepath.Join(templateFolder, tf))
-	//	tmplContent :=
-	//}
-	//templates := template.Must(template.ParseFiles(templateFiles...))
-
 	loadTemplate := func(tf string) *template.Template {
 		content, err := box.FindString(tf)
 		if err != nil {
@@ -102,19 +98,32 @@ func NewServer(rootFolder, homeTopic string) *Server {
 	viewTemplate := loadTemplate("view.html")
 	editTemplate := loadTemplate("edit.html")
 
-	return &Server{
+	sr := &Server{
 		rootFolder:   rootFolder,
 		homeTopic:    homeTopic,
+		port:         port,
 		viewTemplate: viewTemplate,
 		editTemplate: editTemplate,
 		md:           &md,
 		box:          box,
 	}
+
+	err := sr.buildLinks()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Println("forward links:")
+	fmt.Println(sr.forwardLinks)
+	fmt.Println("reverse links:")
+	fmt.Println(sr.reverseLinks)
+	return sr
 }
 
 func (sr *Server) Run() {
-	log.Printf("Starting server with root: '%s' and home: '%s'\n",
-		sr.rootFolder, sr.homeTopic)
+
+	log.Printf("Starting server with root: '%s' and home: '%s' on port:%s\n",
+		sr.rootFolder, sr.homeTopic, sr.port)
+
 	http.HandleFunc("/", sr.homePage)
 	http.HandleFunc("/view/", makeHandler(sr.viewHandler))
 	http.HandleFunc("/edit/", makeHandler(sr.editHandler))
@@ -122,9 +131,5 @@ func (sr *Server) Run() {
 
 	fs := http.FileServer(http.Dir(sr.rootFolder))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-func (sr *Server) buildLinks() {
-
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", sr.port), nil))
 }
