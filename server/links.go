@@ -126,7 +126,35 @@ func parseLinks(content string) []string {
 		}
 		ret = append(ret, fileName)
 	}
+	sort.Strings(ret)
 	return ret
+}
+
+func (sr *Server) linksChanged(page *Page) bool {
+	links := parseLinks(string(page.Body))
+	existingLinks := sr.outgoingLinks(page.Topic)
+	fmt.Println(links, existingLinks)
+	return !compareStringSlices(links, existingLinks)
+}
+
+func compareStringSlices(a, b []string) bool {
+
+	// If one is nil, the other must also be nil.
+	if (a == nil) != (b == nil) {
+		return false
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (sr *Server) outgoingLinks(topic string) []string {

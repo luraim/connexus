@@ -4,12 +4,14 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/palantir/stacktrace"
 )
 
 func (sr *Server) saveHandler(w http.ResponseWriter, r *http.Request, fileName string) {
-	body := r.FormValue("body")
+	// read textarea contents, making sure to eliminate carriage returns if present
+	body := strings.Replace(r.FormValue("body"), "\r", "", -1)
 	p := newPage(fileName, sr)
 	p.Body = []byte(body)
 	err := sr.savePage(p)
@@ -17,7 +19,10 @@ func (sr *Server) saveHandler(w http.ResponseWriter, r *http.Request, fileName s
 		httpErr(w, err)
 		return
 	}
-	sr.buildLinks()
+	if sr.linksChanged(p) {
+		log.Println("links changed - rebuilding links")
+		sr.buildLinks()
+	}
 	http.Redirect(w, r, "/view/"+fileName, http.StatusFound)
 }
 
