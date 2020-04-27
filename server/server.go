@@ -32,6 +32,7 @@ type Server struct {
 	box          *packr.Box
 	forwardLinks LinkMap
 	reverseLinks LinkMap
+	todoLinks    map[string]string // todo -> topic name
 }
 
 var bootstrapFiles = []string{"bootstrap.min.css", "jquery.min.js",

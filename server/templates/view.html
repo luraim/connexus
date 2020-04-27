@@ -16,34 +16,46 @@
     <p>[<a href="/edit/{{.Topic}}">edit</a>]</p>
 </div>
 
-<div class="container">
+<div class="container-fluid">
     <div class="row">
         <div class="col-10">
             {{.Render}}
         </div>
         <div class="col-2">
-            <div class="container">
+            <div class="container-fluid">
 
                 <div class="row">
-                    <h3>Incoming</h3>
-                    <ul>
-                        {{range $lnk := .IncomingLinks}}
-                            <li>
-                                <a href="{{$lnk}}">{{$lnk}}</a>
-                            </li>
-                        {{end}}
-                    </ul>
+                    <div class="col">
+                        <h3>
+                            <a href="{{.HomePage}}">Home</a>
+                        </h3>
+                    </div>
                 </div>
 
                 <div class="row">
-                    <h3>Outgoing</h3>
-                    <ul>
-                        {{range $lnk := .OutgoingLinks}}
-                            <li>
-                                <a href="{{$lnk}}">{{$lnk}}</a>
-                            </li>
-                        {{end}}
-                    </ul>
+                    <div class="col">
+                        <h3>Incoming</h3>
+                        <ul>
+                            {{range $lnk := .IncomingLinks}}
+                                <li>
+                                    <a href="{{$lnk}}">{{$lnk}}</a>
+                                </li>
+                            {{end}}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <h3>Outgoing</h3>
+                        <ul>
+                            {{range $lnk := .OutgoingLinks}}
+                                <li>
+                                    <a href="{{$lnk}}">{{$lnk}}</a>
+                                </li>
+                            {{end}}
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>

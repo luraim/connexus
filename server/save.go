@@ -32,5 +32,10 @@ func (sr *Server) savePage(p *Page) error {
 		return stacktrace.Propagate(err, "failed to get page path")
 	}
 	log.Println("writing to file:", filename)
-	return ioutil.WriteFile(filename, p.Body, 0640)
+	err = ioutil.WriteFile(filename, p.Body, 0640)
+	if err != nil {
+		return stacktrace.Propagate(err, "error writing page:%s", p.Topic)
+	}
+
+	return nil
 }

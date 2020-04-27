@@ -13,7 +13,10 @@ import (
 )
 
 var linkRe = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
+var todoRe = regexp.MustCompile(`(?i)TODO:(.*)`)
 
+// source topic -> destination topic set
+// inner map is used as a set
 type LinkMap map[string]map[string]bool
 
 func (lm LinkMap) String() string {
@@ -70,6 +73,8 @@ func (lm LinkMap) links(topic string) []string {
 func (sr *Server) buildLinks() error {
 	forwardLinks := newLinkMap()
 	reverseLinks := newLinkMap()
+	todoLinks := make(map[string]string)
+
 	fis, err := ioutil.ReadDir(sr.rootFolder)
 	if err != nil {
 		return stacktrace.Propagate(err,
@@ -90,9 +95,12 @@ func (sr *Server) buildLinks() error {
 				log.Println(stacktrace.Propagate(err, "%s", fname))
 				continue
 			}
-			links := parseLinks(string(content))
+			links, todos := parseLinks(string(content))
 			for _, link := range links {
 				forwardLinks.add(topicName, link)
+			}
+			for _, todo := range todos {
+				todoLinks[todo] = topicName
 			}
 		}
 	}
@@ -106,35 +114,69 @@ func (sr *Server) buildLinks() error {
 
 	sr.forwardLinks = forwardLinks
 	sr.reverseLinks = reverseLinks
-	log.Printf("links rebuilt: %d forward, %d reverse\n",
-		len(forwardLinks), len(reverseLinks))
+	sr.todoLinks = todoLinks
+	log.Printf("links rebuilt: %d forward, %d reverse, %d todos\n",
+		len(forwardLinks), len(reverseLinks), len(todoLinks))
+
+	todosPage := newPage("todos", sr)
+	todosBody := &strings.Builder{}
+	for todo, topic := range sr.todoLinks {
+		fmt.Fprintf(todosBody, "- [%s](%s) : %s\n", topic, topic, todo)
+	}
+	todosPage.Body = []byte(todosBody.String())
+	sr.savePage(todosPage)
+
 	return nil
 }
 
 // parseLinks parses markdown content to extract all links
-func parseLinks(content string) []string {
-	ret := make([]string, 0)
+func parseLinks(content string) ([]string, []string) {
+	links := make([]string, 0)
 	res := linkRe.FindAllStringSubmatch(content, -1)
 	for _, m := range res {
 		if len(m) != 3 {
 			continue
 		}
 		_, fileName := m[1], m[2]
-		if strings.HasPrefix(fileName, "/static") {
+		if strings.HasPrefix(fileName, "/static") ||
+			strings.HasPrefix(fileName, "http://") ||
+			strings.HasPrefix(fileName, "https://") {
 			// link to static content - skip
 			continue
 		}
-		ret = append(ret, fileName)
+		links = append(links, fileName)
 	}
-	sort.Strings(ret)
-	return ret
+	sort.Strings(links)
+
+	todos := make([]string, 0)
+	res = todoRe.FindAllStringSubmatch(content, -1)
+	for _, m := range res {
+		if len(m) != 2 {
+			continue
+		}
+		todos = append(todos, m[1])
+	}
+
+	return links, todos
 }
 
 func (sr *Server) linksChanged(page *Page) bool {
-	links := parseLinks(string(page.Body))
+	links, todos := parseLinks(string(page.Body))
 	existingLinks := sr.outgoingLinks(page.Topic)
-	fmt.Println(links, existingLinks)
-	return !compareStringSlices(links, existingLinks)
+	//fmt.Println(links, existingLinks)
+	linksChanged := !compareStringSlices(links, existingLinks)
+
+	todosChanged := false
+	for _, todo := range todos {
+		if topicName, ok := sr.todoLinks[todo]; !ok {
+			if topicName == page.Topic {
+				// found a new todo
+				todosChanged = true
+				break
+			}
+		}
+	}
+	return linksChanged || todosChanged
 }
 
 func compareStringSlices(a, b []string) bool {

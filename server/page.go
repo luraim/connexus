@@ -39,3 +39,7 @@ func (pg *Page) OutgoingLinks() []string {
 func (pg *Page) IncomingLinks() []string {
 	return pg.Server.incomingLinks(pg.Topic)
 }
+
+func (pg *Page) HomePage() string {
+	return pg.Server.homeTopic
+}
