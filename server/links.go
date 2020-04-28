@@ -7,13 +7,14 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/palantir/stacktrace"
 )
 
 var linkRe = regexp.MustCompile(`\[(.*?)\]\((.*?)\)`)
-var todoRe = regexp.MustCompile(`(?i)TODO:(.*)`)
+var todoRe = regexp.MustCompile(`(?i)TODO(\d*):(.*)`)
 
 // source topic -> destination topic set
 // inner map is used as a set
@@ -73,7 +74,7 @@ func (lm LinkMap) links(topic string) []string {
 func (sr *Server) buildLinks() error {
 	forwardLinks := newLinkMap()
 	reverseLinks := newLinkMap()
-	todoLinks := make(map[string]string)
+	todoLinks := make(map[ToDo]string)
 
 	fis, err := ioutil.ReadDir(sr.rootFolder)
 	if err != nil {
@@ -115,22 +116,63 @@ func (sr *Server) buildLinks() error {
 	sr.forwardLinks = forwardLinks
 	sr.reverseLinks = reverseLinks
 	sr.todoLinks = todoLinks
+
 	log.Printf("links rebuilt: %d forward, %d reverse, %d todos\n",
 		len(forwardLinks), len(reverseLinks), len(todoLinks))
 
-	todosPage := newPage("todos", sr)
-	todosBody := &strings.Builder{}
-	for todo, topic := range sr.todoLinks {
-		fmt.Fprintf(todosBody, "- [%s](%s) : %s\n", topic, topic, todo)
-	}
-	todosPage.Body = []byte(todosBody.String())
-	sr.savePage(todosPage)
+	sr.makeToDosPage()
 
 	return nil
 }
 
+const unDefinedPriority = 1000
+
+func (sr *Server) makeToDosPage() {
+	todosPage := newPage("todos", sr)
+	todosBody := &strings.Builder{}
+
+	// group todos by priority
+	tmap := make(map[int][]ToDo)
+	for todo := range sr.todoLinks {
+		tds, ok := tmap[todo.priority]
+		if !ok {
+			tds = make([]ToDo, 0)
+		}
+		tds = append(tds, todo)
+		tmap[todo.priority] = tds
+	}
+
+	// order by priority
+	todoPriorities := make([]int, 0)
+	for p := range tmap {
+		todoPriorities = append(todoPriorities, p)
+	}
+	sort.Ints(todoPriorities)
+
+	for _, priority := range todoPriorities {
+		if priority == unDefinedPriority {
+			fmt.Fprintf(todosBody, "## ToDo items without priority\n")
+		} else {
+			fmt.Fprintf(todosBody, "## Priority %d ToDo items\n", priority)
+		}
+		for _, todo := range tmap[priority] {
+			topic := sr.todoLinks[todo]
+			fmt.Fprintf(todosBody, "- [%s](%s) : %s\n",
+				topic, topic, todo.content)
+		}
+	}
+
+	todosPage.Body = []byte(todosBody.String())
+	sr.savePage(todosPage)
+}
+
+type ToDo struct {
+	priority int
+	content  string
+}
+
 // parseLinks parses markdown content to extract all links
-func parseLinks(content string) ([]string, []string) {
+func parseLinks(content string) ([]string, []ToDo) {
 	links := make([]string, 0)
 	res := linkRe.FindAllStringSubmatch(content, -1)
 	for _, m := range res {
@@ -148,13 +190,23 @@ func parseLinks(content string) ([]string, []string) {
 	}
 	sort.Strings(links)
 
-	todos := make([]string, 0)
+	todos := make([]ToDo, 0)
 	res = todoRe.FindAllStringSubmatch(content, -1)
 	for _, m := range res {
-		if len(m) != 2 {
+		if len(m) != 3 {
 			continue
 		}
-		todos = append(todos, m[1])
+		priorityStr, todo := m[1], m[2]
+		priority := unDefinedPriority
+		var err error
+		if len(priorityStr) > 0 {
+			priority, err = strconv.Atoi(priorityStr)
+			if err != nil {
+				priority = unDefinedPriority
+				continue
+			}
+		}
+		todos = append(todos, ToDo{priority: priority, content: todo})
 	}
 
 	return links, todos
@@ -168,12 +220,10 @@ func (sr *Server) linksChanged(page *Page) bool {
 
 	todosChanged := false
 	for _, todo := range todos {
-		if topicName, ok := sr.todoLinks[todo]; !ok {
-			if topicName == page.Topic {
-				// found a new todo
-				todosChanged = true
-				break
-			}
+		if _, ok := sr.todoLinks[todo]; !ok { // no matching topic name
+			// found a new todo
+			todosChanged = true
+			break
 		}
 	}
 	return linksChanged || todosChanged

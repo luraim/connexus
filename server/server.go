@@ -32,7 +32,7 @@ type Server struct {
 	box          *packr.Box
 	forwardLinks LinkMap
 	reverseLinks LinkMap
-	todoLinks    map[string]string // todo -> topic name
+	todoLinks    map[ToDo]string // todo -> topic name
 }
 
 var bootstrapFiles = []string{"bootstrap.min.css", "jquery.min.js",
@@ -151,7 +151,7 @@ func (sr *Server) Run() {
 		nil))
 }
 
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9/_-]+)$")
+var validPath = regexp.MustCompile("^/(edit|save|view)/([+a-zA-Z0-9/_-]+)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
