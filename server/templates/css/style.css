@@ -75,13 +75,18 @@ caption {
     color: #555;
 }
 
-a:link {
-    color: #3A4089;
+/*a:link {*/
+/*    color: #3A4089;*/
+/*}*/
+
+a {
+    text-decoration: none;
+    border-bottom: #EA215A 0.125em dotted;
 }
 
-a:visited {
-    color: #875098;
-}
+/*a:visited {*/
+/*    color: #875098;*/
+/*}*/
 
 table {
     /*background-color: #eee;*/
