@@ -81,7 +81,7 @@ caption {
 
 a {
     text-decoration: none;
-    border-bottom: #EA215A 0.125em dotted;
+    /*border-bottom: #EA215A 0.125em dotted;*/
 }
 
 /*a:visited {*/
