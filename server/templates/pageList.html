@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <script src="/static/css/jquery.min.js"></script>
+    <script src="/static/css/bootstrap.bundle.min.js"></script>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+
+</head>
+<body>
+
+<div class="text-center">
+    <h1>List of all topics</h1>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-10">
+            <ul>
+                {{range $fname := .Names}}
+                    <li>
+                        <a href="/view/{{$fname}}">
+                            {{$fname}}
+                        </a>
+                    </li>
+                {{end}}
+            </ul>
+        </div>
+        <div class="col-2">
+            <h3>Navigate</h3>
+            <ul>
+                <li><a href="{{.HomePage}}">Home</a></li>
+            </ul>
+
+        </div>
+    </div>
+</div>
+</div>
+
+
+</body>
+</html>

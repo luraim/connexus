@@ -23,16 +23,17 @@ import (
 const templateFolder = "templates"
 
 type Server struct {
-	rootFolder   string
-	homeTopic    string
-	port         string
-	viewTemplate *template.Template
-	editTemplate *template.Template
-	md           *goldmark.Markdown
-	box          *packr.Box
-	forwardLinks LinkMap
-	reverseLinks LinkMap
-	todoLinks    map[ToDo]string // todo -> topic name
+	rootFolder       string
+	homeTopic        string
+	port             string
+	viewTemplate     *template.Template
+	editTemplate     *template.Template
+	pageListTemplate *template.Template
+	md               *goldmark.Markdown
+	box              *packr.Box
+	forwardLinks     LinkMap
+	reverseLinks     LinkMap
+	todoLinks        map[ToDo]string // todoString -> topic name
 }
 
 var bootstrapFiles = []string{"bootstrap.min.css", "jquery.min.js",
@@ -116,15 +117,17 @@ func NewServer(rootFolder, homeTopic, port string) *Server {
 
 	viewTemplate := loadTemplate("view.html")
 	editTemplate := loadTemplate("edit.html")
+	pageListTemplate := loadTemplate("pageList.html")
 
 	sr := &Server{
-		rootFolder:   rootFolder,
-		homeTopic:    homeTopic,
-		port:         port,
-		viewTemplate: viewTemplate,
-		editTemplate: editTemplate,
-		md:           &md,
-		box:          box,
+		rootFolder:       rootFolder,
+		homeTopic:        homeTopic,
+		port:             port,
+		viewTemplate:     viewTemplate,
+		editTemplate:     editTemplate,
+		pageListTemplate: pageListTemplate,
+		md:               &md,
+		box:              box,
 	}
 
 	err = sr.buildLinks()
@@ -141,6 +144,7 @@ func (sr *Server) Run() {
 		sr.rootFolder, sr.homeTopic, sr.port)
 
 	http.HandleFunc("/", sr.homePage)
+	http.HandleFunc("/list", sr.pageListHandler)
 	http.HandleFunc("/view/", makeHandler(sr.viewHandler))
 	http.HandleFunc("/edit/", makeHandler(sr.editHandler))
 	http.HandleFunc("/save/", makeHandler(sr.saveHandler))
