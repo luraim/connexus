@@ -3,6 +3,7 @@ package server
 import (
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/palantir/stacktrace"
 )
@@ -34,4 +35,20 @@ func (sr *Server) loadMarkdown(title string) (*Page, error) {
 	page := newPage(title, sr)
 	page.Body = body
 	return page, nil
+}
+
+func (sr *Server) PageExists(title string) bool {
+	filename, err := sr.pagePath(title)
+	if err != nil {
+		return false
+	}
+	return fileExists(filename)
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }

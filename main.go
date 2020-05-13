@@ -2,6 +2,7 @@ package main
 
 import (
 	"connexus/server"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -23,4 +24,15 @@ func main() {
 
 	server.NewServer(rootFolder, homeTopic, port).Run()
 
+}
+
+func main2() {
+	rootFolder, err := filepath.Abs("testwiki")
+	if err != nil {
+		log.Fatalln("error getting absolute path to root folder")
+	}
+	homeTopic := "test1"
+	port := "46723"
+	s := server.NewServer(rootFolder, homeTopic, port)
+	fmt.Println(s.PageExists(homeTopic))
 }

@@ -35,7 +35,6 @@
                 </div>
 
 
-
                 <div class="row">
                     <div class="col">
                         <h3>Incoming</h3>
@@ -53,9 +52,14 @@
                     <div class="col">
                         <h3>Outgoing</h3>
                         <ul>
+                            {{$pg := .}}
                             {{range $lnk := .OutgoingLinks}}
                                 <li>
-                                    <a href="{{$lnk}}">{{$lnk}}</a>
+                                    {{if ($pg.PageExists $lnk)}}
+                                        <a href="{{$lnk}}">{{$lnk}}</a>
+                                    {{else}}
+                                        <a href="{{$lnk}}" style="color:red">{{$lnk}}</a>
+                                    {{end}}
                                 </li>
                             {{end}}
                         </ul>

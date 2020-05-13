@@ -36,6 +36,10 @@ func (pg *Page) OutgoingLinks() []string {
 	return pg.Server.outgoingLinks(pg.Topic)
 }
 
+func (pg *Page) PageExists(topic string) bool {
+	return pg.Server.PageExists(topic)
+}
+
 func (pg *Page) IncomingLinks() []string {
 	return pg.Server.incomingLinks(pg.Topic)
 }
