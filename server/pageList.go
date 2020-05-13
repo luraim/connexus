@@ -15,18 +15,36 @@ func (sr *Server) pageListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topicNames := make([]string, 0)
+	topicMap := make(map[string]bool)
+	// include all md file names, so that we can cover orphaned topics as well
 	for _, md := range mdFiles {
 		_, f := filepath.Split(md)
-		topicNames = append(topicNames, f[:len(f)-3])
+		topicMap[f[:len(f)-3]] = true
+
+	}
+	// include all outgoing links, so that we can cover unpopulated links
+	for _, destinations := range sr.forwardLinks {
+		for d := range destinations {
+			topicMap[d] = true
+		}
+	}
+	// collect unique topic names, and sort alphabetically
+	topicNames := make([]string, 0)
+	for t := range topicMap {
+		topicNames = append(topicNames, t)
 	}
 	sort.Strings(topicNames)
-	err = sr.pageListTemplate.ExecuteTemplate(w, "pageList.html", struct {
-		HomePage string
-		Names    []string
-	}{sr.homeTopic, topicNames})
+
+	err = sr.pageListTemplate.ExecuteTemplate(w, "pageList.html",
+		TopicList{sr.homeTopic, topicNames, sr})
 	if err != nil {
 		httpErr(w, err)
 		return
 	}
+}
+
+type TopicList struct {
+	HomePage string
+	Names    []string
+	Server   *Server
 }
