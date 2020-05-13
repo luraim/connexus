@@ -20,22 +20,37 @@
 <div class="container">
     <div class="row">
         <div class="col-10">
-            <ul>
-                {{$sr := .Server}}
-                {{range $fname := .Names}}
-                    <li>
-                        {{if $sr.PageExists $fname}}
-                            <a href="/view/{{$fname}}">
-                                {{$fname}}
-                            </a>
+            <table class="table table-striped">
+                <thead class="thead-dark">
+                <tr>
+                    <th class="text-center">Topic</th>
+                    <th class="text-center">Incoming Links</th>
+                    <th class="text-center">Outgoing Links</th>
+                </tr>
+                </thead>
+                <tbody>
+                {{range $topic := .Topics}}
+                    <tr>
+                        {{$fname := $topic.Name}}
+                        {{if $topic.Exists}}
+                            <td>
+                                <a href="/view/{{$fname}}">
+                                    {{$fname}}
+                                </a>
+                            </td>
                         {{else}}
-                            <a href="/view/{{$fname}}" style="color:red">
-                                {{$fname}}
-                            </a>
+                            <td>
+                                <a href="/view/{{$fname}}"  style="color:red">
+                                    {{$fname}}
+                                </a>
+                            </td>
                         {{end}}
-                    </li>
+                        <td class="text-center">{{$topic.Incoming}}</td>
+                        <td class="text-center">{{$topic.Outgoing}}</td>
+                    </tr>
                 {{end}}
-            </ul>
+                </tbody>
+            </table>
         </div>
         <div class="col-2">
             <h3>Navigate</h3>
