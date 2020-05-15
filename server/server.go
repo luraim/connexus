@@ -155,7 +155,7 @@ func (sr *Server) Run() {
 		nil))
 }
 
-var validPath = regexp.MustCompile("^/(edit|save|view)/([+a-zA-Z0-9/_-]+)$")
+var validPath = regexp.MustCompile(`^/(edit|save|view)/([+a-zA-Z0-9/_\-.]+)$`)
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

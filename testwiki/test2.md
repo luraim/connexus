@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                         
+                                                                                                                                                                                                                                                                                         
 # Ne invidia verbi labefactetur oratio mea nam
 
 Corpore. Non placet autem ***conversa de graecis? nam*** placet, nihil dolere, primum. De rebus alia ratione inquit, modo ista sis saluti prospexit civium, qua. Quae ille diceret? cum **posidonium. quid? theophrastus mediocriterne** voluptatibus maximis saepe priventur. Amicitia firmam et perpetuam ***successionem efficit voluptatis. itaque*** voluptas summum sit bonum. Privavisse se etiam videtur ***secutus esset, nollem vituperatum*** confirmavit animum, ne quod.
@@ -6,6 +6,7 @@ Corpore. Non placet autem ***conversa de graecis? nam*** placet, nihil dolere, p
 [test1](test1)
 [test3](test3)
 [Topic with '+' char](Topic+_with_plus)
+[Topic with '.' char](Topic.with_dot)
 
 ## Etenim si delectamur, cum scribimus, quis est tam
 
@@ -30,6 +31,7 @@ Docere sic: Omne animal
 * An 'Utinam ne in ***alii petulantes, alii audaces*** quidem rerum facilis est.
 * Et verissimum sit, exquirere? **et necessariae, alterum, quae** individua et solida corpora.
 
+                    
                     
                     
                     
