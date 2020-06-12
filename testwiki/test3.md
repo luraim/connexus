@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                
 ## Test list
 
  * abc
@@ -24,7 +24,11 @@
 ## some action items
 
 - TODO2: some task that must be done
+- TODO1: some task with priority 1
 - TODO: some other task that must be done
+- TODO1: another task with priority 1
+                    
+                    
                     
                     
                     

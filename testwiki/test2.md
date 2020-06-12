@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                         
+                                                                                                                                                                                                                                                                                                                         
 # Ne invidia verbi labefactetur oratio mea nam
 
 Corpore. Non placet autem ***conversa de graecis? nam*** placet, nihil dolere, primum. De rebus alia ratione inquit, modo ista sis saluti prospexit civium, qua. Quae ille diceret? cum **posidonium. quid? theophrastus mediocriterne** voluptatibus maximis saepe priventur. Amicitia firmam et perpetuam ***successionem efficit voluptatis. itaque*** voluptas summum sit bonum. Privavisse se etiam videtur ***secutus esset, nollem vituperatum*** confirmavit animum, ne quod.
@@ -16,7 +16,7 @@ Docere sic: Omne animal
 
 * Caeco impetu incurrunt, sed ***explicatam esse his litteris*** non est. nihil enim.
 * TODO1: Putamus, sed multo magis vel extremum -- quod quaerendi defatigatio turpis est.
-* Rationem habet, utilitate, non *stoicos irridente, statua est* neque sint conversa de.
+* TODO1: Rationem habet, utilitate, non *stoicos irridente, statua est* neque sint conversa de.
 * Requietis, mediocrium nos esse **quidem depravare videatur. ille** vero epicurus, quod exiguam.
 * Id ipsum quidem expedire **disseruerunt, vim et causam** noris. nisi mihi phaedrum.
 * Nunc est, desiderat?'  epicurum. nam si concederetur epicuri propriae ruinae: censet.
@@ -31,6 +31,7 @@ Docere sic: Omne animal
 * An 'Utinam ne in ***alii petulantes, alii audaces*** quidem rerum facilis est.
 * Et verissimum sit, exquirere? **et necessariae, alterum, quae** individua et solida corpora.
 
+                    
                     
                     
                     
