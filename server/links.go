@@ -155,15 +155,18 @@ func (sr *Server) makeToDosPage() {
 		} else {
 			fmt.Fprintf(todosBody, "## Priority %d ToDo items\n", priority)
 		}
+
 		// within a priority, sort todos alphabetically
-		todos := tmap[priority]
-		sort.Slice(todos, func(i, j int) bool {
-			return todos[i].content < todos[j].content
-		})
-		for _, todo := range todos {
+		todoLines := make([]string, 0)
+		for _, todo := range tmap[priority] {
 			topic := sr.todoLinks[todo]
-			fmt.Fprintf(todosBody, "- [%s](%s) : %s\n",
-				topic, topic, todo.content)
+			todoLines = append(todoLines,
+				fmt.Sprintf("- [%s](%s) : %s\n", topic, topic, todo.content))
+		}
+		sort.Strings(todoLines)
+
+		for _, line := range todoLines {
+			fmt.Fprintf(todosBody, line)
 		}
 	}
 
