@@ -1,4 +1,0 @@
-#!/bin/bash
-export BIN=connexusserver
-./build &&\
-$BIN testwiki test1 46723
