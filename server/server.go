@@ -99,7 +99,7 @@ func NewServer(rootFolder, homeTopic, port string) *Server {
 			extension.Strikethrough, extension.Typographer,
 			highlighting.Highlighting),
 		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
-		goldmark.WithRendererOptions(html.WithHardWraps(), html.WithXHTML()))
+		goldmark.WithRendererOptions(html.WithHardWraps(), html.WithXHTML(), html.WithUnsafe()))
 
 	loadTemplate := func(tf string) *template.Template {
 		content, err := box.FindString(tf)
