@@ -17,57 +17,50 @@
 </div>
 
 <div class="container-fluid">
+
     <div class="row">
-        <div class="col-10">
+        <div class="col">
             {{.Render}}
         </div>
-        <div class="col-2">
-            <div class="container-fluid">
+    </div>
 
-                <div class="row">
-                    <div class="col">
-                        <h3>Navigate</h3>
-                        <ul>
-                            <li><a href="{{.HomePage}}">Home</a></li>
-                            <li><a href="/list">All pages</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-
-                <div class="row">
-                    <div class="col">
-                        <h3>Incoming</h3>
-                        <ul>
-                            {{range $lnk := .IncomingLinks}}
-                                <li>
-                                    <a href="{{$lnk}}">{{$lnk}}</a>
-                                </li>
-                            {{end}}
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col">
-                        <h3>Outgoing</h3>
-                        <ul>
-                            {{$pg := .}}
-                            {{range $lnk := .OutgoingLinks}}
-                                <li>
-                                    {{if ($pg.PageExists $lnk)}}
-                                        <a href="{{$lnk}}">{{$lnk}}</a>
-                                    {{else}}
-                                        <a href="{{$lnk}}" style="color:red">{{$lnk}}</a>
-                                    {{end}}
-                                </li>
-                            {{end}}
-                        </ul>
-                    </div>
-                </div>
-            </div>
+    <hr>
+    <div class="row">
+        <div class="col-4">
+            <h3>Navigate</h3>
+            <ul>
+                <li><a href="{{.HomePage}}">Home</a></li>
+                <li><a href="/list">All pages</a></li>
+            </ul>
+        </div>
+        <div class="col-4">
+            <h3>Incoming</h3>
+            <ul>
+                {{range $lnk := .IncomingLinks}}
+                <li>
+                    <a href="{{$lnk}}">{{$lnk}}</a>
+                </li>
+                {{end}}
+            </ul>
+        </div>
+        <div class="col-4">
+            <h3>Outgoing</h3>
+            <ul>
+                {{$pg := .}}
+                {{range $lnk := .OutgoingLinks}}
+                <li>
+                    {{if ($pg.PageExists $lnk)}}
+                    <a href="{{$lnk}}">{{$lnk}}</a>
+                    {{else}}
+                    <a href="{{$lnk}}" style="color:red">{{$lnk}}</a>
+                    {{end}}
+                </li>
+                {{end}}
+            </ul>
         </div>
     </div>
+    <hr>
 </div>
+
 </body>
 </html>
